@@ -9,5 +9,4 @@ urlpatterns = [
     path("logout/", authnapp.logout, name="logout"),
     path("register/", authnapp.register, name="register"),
     path("edit/", authnapp.edit, name="edit"),
-
 ]
