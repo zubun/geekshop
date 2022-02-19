@@ -22,11 +22,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = (
-    "django-insecure-m9y=i885a@(o3630p9w@p*p1_syv)&)y^x1@n1&)97#mc^r)mt"
+    "django-insecure-$5rw9di_jqhuscpkyxi4^zsou&-r=nu=!5v+_ik0arwgo$az3#"
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False if os.getenv("DJANGO_PRODUCTION", default=None) else True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -59,6 +59,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
 
 ROOT_URLCONF = "geekshop.urls"
@@ -89,12 +90,23 @@ WSGI_APPLICATION = "geekshop.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "NAME": "geekshop",
+            "ENGINE": "django.db.backends.postgresql",
+            "USER": "django",
+            "PASSWORD": "geekbrains",
+            "HOST": "localhost",
+        }
+    }
 
 
 # Password validation
@@ -119,18 +131,6 @@ else:
     # Set simple password for debug
     AUTH_PASSWORD_VALIDATORS = []
 
-"""
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"
-    },
-]
-"""
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -151,12 +151,11 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# In common case STATIC_ROOT can not be in STATICFILES_DIRS
+if DEBUG:
+    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Media files
 MEDIA_URL = "/media/"
@@ -164,7 +163,9 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Set login path:
-#   https://docs.djangoproject.com/en/2.2/ref/settings/#login-url
+#   https://docs.djangoproject.com/en/3.2/ref/settings/#login-url
+LOGIN_URL = "authnapp:login"
+
 DOMAIN_NAME = "http://localhost:8000"
 
 # Read about sending email:
@@ -189,14 +190,10 @@ EMAIL_HOST_PASSWORD = None
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = "tmp/email-messages/"
 
-
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
     "social_core.backends.github.GithubOAuth2",
-    "social_core.backends.google.GoogleOAuth2",
 )
-
-SOCIAL_AUTH_URL_NAMESPACE = "social"
 
 import json
 
@@ -207,15 +204,3 @@ with open(
 
 SOCIAL_AUTH_GITHUB_KEY = github_auth["client_id"]
 SOCIAL_AUTH_GITHUB_SECRET = github_auth["client_secret"]
-
-SOCIAL_AUTH_URL_NAMESPACE = "social_1"
-
-with open(
-    os.path.join(BASE_DIR, "tmp", "secrets", "google.json"), "r"
-) as secrets:
-    GOOGLE_PLUS = json.load(secrets)
-
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = GOOGLE_PLUS["SOCIAL_AUTH_GOOGLE_OAUTH2_KEY"]
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = GOOGLE_PLUS[
-    "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET"
-]
