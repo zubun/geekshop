@@ -11,9 +11,6 @@ from basketapp.models import Basket
 from ordersapp.forms import OrderItemForm
 from ordersapp.models import Order, OrderItem
 
-from mainapp.models import Product
-from django.http import JsonResponse
-
 
 class OrderList(ListView):
     model = Order
@@ -142,6 +139,11 @@ def product_quantity_update_save(instance, sender, **kwargs):
 def product_quantity_update_delete(instance, **kwargs):
     instance.product.quantity += instance.quantity
     instance.product.save()
+
+
+from django.http import JsonResponse
+
+from mainapp.models import Product
 
 
 def get_product_price(request, pk):
